@@ -4,12 +4,12 @@ import { FaMoon, FaSun } from "react-icons/fa";
 
 function Navbar() {
 
-  // ✅ Get saved theme from localStorage
+  
   const [darkMode, setDarkMode] = useState(
     localStorage.getItem("theme") === "dark"
   );
 
-  // ✅ Apply theme + save it
+  
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add("dark");
@@ -36,7 +36,7 @@ function Navbar() {
           <Link to="/about">About</Link>
           <Link to="/book">Book Now</Link>
 
-          {/* DARK MODE BUTTON */}
+         
           <button onClick={() => setDarkMode(!darkMode)}>
             {darkMode ? <FaSun /> : <FaMoon />}
           </button>

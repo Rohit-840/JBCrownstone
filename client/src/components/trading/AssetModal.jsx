@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   AreaChart,
   Area,
@@ -7,16 +8,38 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-
-
 function AssetModal({ account, onClose }) {
+  const [trades, setTrades] = useState([]);
+
+  useEffect(() => {
+    if (!account) return;
+
+    fetch(`http://localhost:5000/api/myfxbook/history/${account.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+  console.log("HISTORY:", data);
+
+  const history = data.history || [];
+
+  const formatted = history.map((t) => ({
+    name: t.symbol,
+    type: t.cmd.toUpperCase(),
+    lots: t.volume,
+    open: t.openPrice,
+    close: t.closePrice,
+    pl: Number(t.profit).toFixed(2),
+  }));
+
+  setTrades(formatted);
+})
+      .catch((err) => console.log("ERROR:", err));
+  }, [account]);
+
   if (!account) return null;
-  console.log("MODAL DATA:", account);
-    
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center">
-
-      <div className="bg-[#111827] p-6 rounded-xl w-[800px] relative">
+      <div className="bg-[#111827] p-6 rounded-xl w-[900px] relative">
 
         {/* CLOSE BUTTON */}
         <button
@@ -26,136 +49,121 @@ function AssetModal({ account, onClose }) {
           ✖
         </button>
 
-        {/* HEADER */}
+        {/* Header */}
         <h2 className="text-xl mb-4">
           {account.name} - Performance
         </h2>
 
-        {/* STATS */}
-        <div className="grid grid-cols-5 gap-4 mb-6 text-sm">
-          <div>Total Trades<br /><b>310</b></div>
-          <div>RR<br /><b>1:3.5</b></div>
-          <div>TP<br /><b>120</b></div>
-          <div>SL<br /><b className="text-red-400">34</b></div>
-          <div>Drawdown<br /><b className="text-red-400">8.5%</b></div>
+        {/* GRAPH + ASSETS */}
+        <div className="grid grid-cols-3 gap-6 mb-6">
+
+          {/* GRAPH */}
+          <div className="col-span-2 bg-[#0b0f19] p-4 rounded-lg">
+            <h3 className="mb-3 text-gray-300">Equity Curve</h3>
+
+            <ResponsiveContainer width="100%" height={250}>
+              <AreaChart data={account.chart}>
+                <XAxis dataKey="name" stroke="#555" />
+                <YAxis stroke="#555" />
+                <Tooltip />
+
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#facc15"
+                  fill="rgba(250,204,21,0.2)"
+                  strokeWidth={3}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* ASSETS */}
+          <div className="bg-[#0b0f19] p-4 rounded-lg">
+            <h3 className="text-gray-300 mb-3">Monitored Assets</h3>
+
+            {account.assets.map((asset, i) => (
+              <div
+                key={i}
+                className="flex justify-between py-2 border-b border-gray-700"
+              >
+                <span>{asset.name}</span>
+                <span
+                  className={
+                    asset.profit.includes("-")
+                      ? "text-red-400"
+                      : "text-green-400"
+                  }
+                >
+                  {asset.profit}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* 🔥 GRAPH (NEW ADDED) */}
-        
-        <div className="grid grid-cols-3 gap-6">
-
-  {/* LEFT SIDE → GRAPH */}
-  <div className="col-span-2 bg-[#0b0f19] p-4 rounded-lg">
-
-    <h3 className="mb-3 text-gray-300">Equity Curve</h3>
-
-    <ResponsiveContainer width="100%" height={250}>
-      <AreaChart data={account.chart || []}>
-        <XAxis dataKey="name" stroke="#555" />
-        <YAxis stroke="#555" />
-        <Tooltip />
-
-        <Area
-          type="monotone"
-          dataKey="value"
-          stroke="#facc15"
-          fill="rgba(250,204,21,0.2)"
-          strokeWidth={3}
-        />
-      </AreaChart>
-    </ResponsiveContainer>
-
-  </div>
-
-  {/* RIGHT SIDE → MONITORED ASSETS */}
-  <div className="bg-[#0b0f19] p-4 rounded-lg">
-
-    <div className="flex justify-between mb-3">
-      <h3 className="text-gray-300">Monitored Assets</h3>
-      <span className="text-xs text-gray-500">DETAILS</span>
-    </div>
-
-    {account.assets?.map((asset, i) => (
-      <div
-        key={i}
-        className="flex justify-between items-center py-3 border-b border-gray-700"
-      >
-        <div>
-          <p className="font-semibold">{asset.name}</p>
-          <p className="text-xs text-gray-400">{asset.type}</p>
-        </div>
-
-        <p
-          className={
-            asset.profit.includes("-")
-              ? "text-red-400"
-              : "text-green-400"
-          }
-        >
-          {asset.profit}
-        </p>
-      </div>
-    ))}
-
-  </div>
-
-</div>
-
-        {/* TABLE */}
+        {/* Trades Table */}
         <div className="bg-[#0b0f19] rounded-lg overflow-hidden">
-    
-  <table className="w-full text-sm">
+          <table className="w-full text-sm">
 
-    {/* HEADER */}
-    <thead className="bg-[#111827] text-gray-400 text-xs uppercase tracking-wider">
-      <tr>
-        <th className="py-3 px-4 text-left">Assests</th>
-        <th className="py-3 px-4 text-left">Type</th>
-        <th className="py-3 px-4 text-left">Lots</th>
-        <th className="py-3 px-4 text-left">Open</th>
-        <th className="py-3 px-4 text-left">Close</th>
-        <th className="py-3 px-4 text-right">P/L</th>
-      </tr>
-    </thead>
+            <thead className="bg-[#111827] text-gray-400 text-xs uppercase">
+              <tr>
+                <th className="py-3 px-4 text-left">Asset</th>
+                <th className="py-3 px-4 text-left">Type</th>
+                <th className="py-3 px-4 text-left">Lots</th>
+                <th className="py-3 px-4 text-left">Open</th>
+                <th className="py-3 px-4 text-left">Close</th>
+                <th className="py-3 px-4 text-right">P/L</th>
+              </tr>
+            </thead>
 
-    {/* BODY */}
-        <tbody>
-    {account.trades?.map((trade, i) => (
-        <tr
-        key={i}
-        className="border-b border-gray-800 hover:bg-[#111827]"
-        >
-        <td className="py-3 px-4">{trade.name}</td>
+            <tbody>
+              {trades.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="text-center py-4 text-gray-400">
+                    No trades available
+                  </td>
+                </tr>
+              ) : (
+                trades.map((trade, i) => (
+                  <tr
+                    key={i}
+                    className="border-b border-gray-800 hover:bg-[#111827]"
+                  >
+                    <td className="py-3 px-4 font-semibold">
+                      {trade.name}
+                    </td>
 
-        <td
-            className={`py-3 px-4 ${
-            trade.type === "BUY"
-                ? "text-green-400"
-                : "text-red-400"
-            }`}
-        >
-            {trade.type}
-        </td>
+                    <td
+                      className={`py-3 px-4 ${
+                        trade.type === "BUY"
+                          ? "text-green-400"
+                          : "text-red-400"
+                      }`}
+                    >
+                      {trade.type}
+                    </td>
 
-        <td className="py-3 px-4">{trade.lots}</td>
-        <td className="py-3 px-4">{trade.open}</td>
-        <td className="py-3 px-4">{trade.close}</td>
+                    <td className="py-3 px-4">{trade.lots}</td>
+                    <td className="py-3 px-4">{trade.open}</td>
+                    <td className="py-3 px-4">{trade.close}</td>
 
-        <td
-            className={`py-3 px-4 text-right ${
-            trade.pl.includes("-")
-                ? "text-red-400"
-                : "text-green-400"
-            }`}
-        >
-            {trade.pl}
-        </td>
-        </tr>
-    ))}
-    </tbody>
+                    <td
+                      className={`py-3 px-4 text-right ${
+                        trade.pl.includes("-")
+                          ? "text-red-400"
+                          : "text-green-400"
+                      }`}
+                    >
+                      {trade.pl}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
 
-  </table>
-</div>
+          </table>
+        </div>
 
       </div>
     </div>

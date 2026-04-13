@@ -14,7 +14,10 @@ function AccountCard({ account, onClick }) {
       <p className="text-yellow-400 text-xl">
         {account.balance}
       </p>
+      <button onClick={() => window.location.href = "/mt5"} className="bg-yellow-500 px-3 py-1 rounded" > View MT5 </button>
     </div>
+    
+    
   );
 }
 
