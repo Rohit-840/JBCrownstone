@@ -56,34 +56,3 @@ data = {
 
 print(json.dumps(data))
 
-
-
-# def get_data():
-#     account = mt5.account_info()
-
-#     account_data = {
-#         "balance": account.balance,
-#         "equity": account.equity,
-#         "margin": account.margin,
-#         "freeMargin": account.margin_free,
-#         "marginLevel": account.margin_level,
-#     }
-
-#     positions = mt5.positions_get()
-#     trades = []
-
-#     if positions:
-#         for p in positions:
-#             trades.append({
-#                 "symbol": p.symbol,
-#                 "type": "BUY" if p.type == 0 else "SELL",
-#                 "volume": p.volume,
-#                 "profit": p.profit
-#             })
-
-#     return {
-#         "account": account_data,
-#         "trades": trades
-#     }
-
-# print(json.dumps(get_data()))
